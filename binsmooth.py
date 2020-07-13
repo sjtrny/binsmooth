@@ -77,6 +77,9 @@ class BinSmooth():
 
         return self
 
+    def pdf(self, x_val):
+        return 0 if x_val <= 0 else 0 if x_val >= self.tail_ else self.cdf_cs_.derivative()(x_val)
+
     def cdf(self, x_val):
         return 0 if x_val <= 0 else 1 if x_val >= self.tail_ else self.cdf_cs_(x_val)
 
