@@ -8,6 +8,8 @@ This module is a re-implementation of the R binsmooth package.
 #
 # License: MIT
 
+__version__ = '0.11'
+
 import numpy as np
 from scipy.integrate import cumtrapz, trapz
 from scipy.interpolate import PchipInterpolator, interp1d
