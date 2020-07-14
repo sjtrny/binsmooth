@@ -12,4 +12,4 @@ bs = BinSmooth()
 bs.fit(bin_edges, counts)
 
 # Print median estimate
-print(bs.inv_cdf(0.5))
+print(bs.inv_cdf([0.5, 0.8]))

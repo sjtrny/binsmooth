@@ -25,7 +25,15 @@ def optim(tail, x, y, mean):
     return loss(mean, est_mean)
 
 
-def densityspace(start, stop, density_fn, num=50, normalize=True, endpoint=True, integral_num=50):
+def densityspace(
+    start,
+    stop,
+    density_fn,
+    num=50,
+    normalize=True,
+    endpoint=True,
+    integral_num=50,
+):
     # Based on https://stackoverflow.com/a/62740029/922745
 
     xs = np.linspace(start, stop, integral_num)
@@ -43,12 +51,14 @@ def densityspace(start, stop, density_fn, num=50, normalize=True, endpoint=True,
     return intfunc(np.linspace(start, stop, num, endpoint=endpoint))
 
 
-class BinSmooth():
-
+class BinSmooth:
     def fit(self, x, y, m=None, tail_0=None):
         if m is None:
             # Adhoc mean estimate if none supplied
-            m = np.average(np.concatenate([x[:-1] / 2, [x[-1], x[-1] * 2]]), weights=y / np.sum(y))
+            m = np.average(
+                np.concatenate([x[:-1] / 2, [x[-1], x[-1] * 2]]),
+                weights=y / np.sum(y),
+            )
 
         if tail_0 is None:
             # Temporarily set the tail value
@@ -58,8 +68,16 @@ class BinSmooth():
         y_ecdf = np.cumsum(y)
         y_ecdf_normed = y_ecdf / np.max(y_ecdf)
 
+        self.min_x_ = x[0]
+
         # Search for a tail
-        self.tail_ = fmin(optim, tail_0, args=(x_wtail.copy(), y_ecdf_normed, m), maxiter=16, disp=False)[0]
+        self.tail_ = fmin(
+            optim,
+            tail_0,
+            args=(x_wtail.copy(), y_ecdf_normed, m),
+            maxiter=16,
+            disp=False,
+        )[0]
 
         # Estimate the CDF by fitting a spline
         x_wtail[-1] = self.tail_
@@ -78,10 +96,12 @@ class BinSmooth():
         return self
 
     def pdf(self, x_val):
-        return 0 if x_val <= 0 else 0 if x_val >= self.tail_ else self.cdf_cs_.derivative()(x_val)
+        return self.cdf_cs_.derivative()(
+            np.clip(x_val, self.min_x_, self.tail_)
+        )
 
     def cdf(self, x_val):
-        return 0 if x_val <= 0 else 1 if x_val >= self.tail_ else self.cdf_cs_(x_val)
+        return self.cdf_cs_(np.clip(x_val, self.min_x_, self.tail_))
 
     def inv_cdf(self, percentile):
-        return 0 if percentile <= 0 else 1 if percentile >= 1 else self.inv_cdf_cs_(percentile)
+        return self.inv_cdf_cs_(np.clip(percentile, 0, 1))
