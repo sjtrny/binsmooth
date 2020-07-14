@@ -3,7 +3,7 @@
 Python implementation of "[Better Estimates from Binned Income Data][1]"
 
 	Better Estimates from Binned Income Data: Interpolated CDFs and Mean-Matching
-	Paul T. von Hippel, David J. Hunter, McKalie Drownb
+	Paul T. von Hippel, David J. Hunter, McKalie Drown
 	Sociological Science
 	Volume 4, Number 26, Pages 641-655
 	2017

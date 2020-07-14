@@ -1,3 +1,13 @@
+"""binsmooth - Better Estimates from Binned Income Data.
+
+This module is a re-implementation of the R binsmooth package.
+
+"""
+
+# Author: Stephen Tierney <sjtrny@gmail.com>
+#
+# License: MIT
+
 import numpy as np
 from scipy.integrate import cumtrapz, trapz
 from scipy.interpolate import PchipInterpolator, interp1d
@@ -5,16 +15,49 @@ from scipy.optimize import fmin
 
 
 def estimate_mean(lb, ub, cdf_fn, integral_num=50):
+    """Estimate the mean from a CDF.
+
+    Parameters
+    ----------
+    lb: float
+        The lower bound on the CDF domain.
+    ub: float
+        The upper bound on the CDF domain
+    cdf_fn: function
+        The CDF function
+    integral_num: int
+        The number of points to evaluate the CDF with. A larger value will
+        yield a more accurate estimate and vice versa.
+
+    Returns
+    -------
+    mean: float
+        The estimated mean
+    """
     x_integral = np.linspace(lb, ub, integral_num)
 
     return ub - trapz(cdf_fn(x_integral), x_integral)
 
 
-def loss(mean_t, mean_e):
-    return (mean_t - mean_e) ** 2
+def evaluate_tail(tail, x, y, mean):
+    """Evaluate a tail value proposal.
 
+    Parameters
+    ----------
+    tail: float
+        The proposed tail value.
+    x: ndarray
+        The bin boundaries.
+    y: ndarray
+        The bin values.
+    mean: float
+        The target mean value
 
-def optim(tail, x, y, mean):
+    Returns
+    -------
+    loss: float
+        The loss associated with the tail proposal
+    """
     # Use current tail guess
     x[-1] = tail
     # Fit spline
@@ -22,38 +65,171 @@ def optim(tail, x, y, mean):
     # Estimate mean
     est_mean = estimate_mean(x[0], x[-1], cdf)
     # Calculate loss
-    return loss(mean, est_mean)
+    return (mean - est_mean) ** 2
+
+
+def interpolated_inverse(x, y, num, endpoint=True):
+    """Generate samples from an interpolated inverse.
+
+    Parameters
+    ----------
+    x: ndarray
+        Values from the original horizontal axis
+    y: ndarray
+        Values from the original vertical axis
+    num: int
+        Number of samples to generate
+    endpoint: bool
+        If True, `stop` is the last sample. Otherwise, it is not included.
+
+    Returns
+    -------
+    samples: ndarray
+        Values that are draw sequentially over the range of the inverse
+    """
+    intfunc = interp1d(y, x, kind=1)
+
+    return intfunc(np.linspace(0, 1, num, endpoint=endpoint))
+
+
+def cumdensityspace(
+    start, stop, cdf_fn, num=50, interp_num=50, endpoint=True,
+):
+    """Return numbers over an interval spaced by a given CDF.
+
+    Spacing is determined by the gradient of the CDF. Steeper regions will have
+    smaller spacing between points while flatter regions will have large
+    spacing between points.
+
+    Parameters
+    ----------
+    start: float
+        The starting value of the sequence.
+    stop: float
+        The end value of the sequence, unless `endpoint` is set to False.
+    density_fn: func
+        The function specifying the relative density along the axis.
+    num: int
+        Number of samples to generate
+    endpoint: bool
+        If True, `stop` is the last sample. Otherwise, it is not included.
+    integral_num: int
+        The number of points to evaluate the integral of the density with. A
+        larger value will yield a more accurate estimate and vice versa.
+
+    Returns
+    -------
+    samples: ndarray
+        The point are `num` equally spaced samples in the closed interval
+    """
+    xs = np.linspace(start, stop, interp_num)
+    cps = cdf_fn(xs)
+    cps[-1] = 1
+
+    return interpolated_inverse(xs, cps, num=num, endpoint=endpoint)
 
 
 def densityspace(
-    start,
-    stop,
-    density_fn,
-    num=50,
-    normalize=True,
-    endpoint=True,
-    integral_num=50,
+    start, stop, density_fn, num=50, interp_num=50, endpoint=True,
 ):
-    # Based on https://stackoverflow.com/a/62740029/922745
+    """Return numbers over an interval spaced by a given density.
 
-    xs = np.linspace(start, stop, integral_num)
+    Spacing is determined by the local density. In regions of higher density
+    the spacing will be lower, while in areas of low density the spacing
+    will be larger.
+
+    Based on https://stackoverflow.com/a/62740029/922745
+
+    Parameters
+    ----------
+    start: float
+        The starting value of the sequence.
+    stop: float
+        The end value of the sequence, unless `endpoint` is set to False.
+    density_fn: func
+        The function specifying the relative density along the axis.
+    num: int
+        Number of samples to generate
+    endpoint: bool
+        If True, `stop` is the last sample. Otherwise, it is not included.
+    integral_num: int
+        The number of points to evaluate the integral of the density with. A
+        larger value will yield a more accurate estimate and vice versa.
+
+    Returns
+    -------
+    samples: ndarray
+        The point are `num` equally spaced samples in the closed interval
+    """
+    xs = np.linspace(start, stop, interp_num)
     ps = density_fn(xs)
 
     cps = cumtrapz(ps, xs, initial=0)
     cps /= cps[-1]
 
-    intfunc = interp1d(cps, xs, kind=1)
-
-    if normalize:
-        start = 0
-        stop = 1
-
-    return intfunc(np.linspace(start, stop, num, endpoint=endpoint))
+    return interpolated_inverse(xs, cps, num=num, endpoint=endpoint)
 
 
 class BinSmooth:
-    def fit(self, x, y, m=None, includes_tail=False):
+    """A binned data smoother.
 
+    This class implements the method outlined in [1]. It proceeds by fitting a
+    cubic spline to the empirical distribution function of the binned data.
+
+    Attributes
+    ----------
+    min_x_: float
+        The minimum value of the empirical distribution function
+    tail_: float
+        The maximum value of the estimated CDF
+    mean_est_: float
+        The estimated mean of the estimated distribution
+    cdf_cs_: func
+        The estimated CDF function
+    inv_cdf_cs_: func
+        The estimated inverse CDF function
+
+    References
+    ----------
+    .. [1] P. von Hippel, D. Hunter, M. Drown "Better Estimates from Binned
+           Income Data: Interpolated CDFs and Mean-Matching", 2017.
+
+    Examples
+    --------
+
+    >>> from binsmooth import BinSmooth
+
+    >>>  bin_edges = np.array([0, 18200, 37000, 87000, 180000])
+    >>> counts = np.array([0, 7527, 13797, 75481, 50646, 803])
+
+    >>>  bs = BinSmooth()
+
+    >>> bs.fit(bin_edges, counts)
+
+    >>> print(bs.inv_cdf(0.5))
+    70120.071...
+    """
+
+    def fit(self, x, y, m=None, includes_tail=False):
+        """Fit the cubic spline to the data.
+
+        Parameters
+        ----------
+        x: ndarray
+            The bin edges
+        y: ndarray
+            The values for each bin
+        m: float
+            The mean of the distribution
+        includes_tail: bool
+            If True then it is assumed that the last value in x is the upper
+            bound of the distribution, otherwise the upper bound is estimated
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
         if includes_tail and len(x) != len(y):
             raise ValueError(
                 "Length of x and y must match when tail is included"
@@ -88,7 +264,7 @@ class BinSmooth:
 
             # Search for a tail
             self.tail_ = fmin(
-                optim,
+                evaluate_tail,
                 tail_0,
                 args=(x_wtail.copy(), y_ecdf_normed, m),
                 maxiter=16,
@@ -106,22 +282,56 @@ class BinSmooth:
         self.mean_est_ = estimate_mean(x_wtail[0], x_wtail[-1], self.cdf_cs_)
 
         # Approximate inverse CDF by sampling the CDF
-        # Sample with higher density in steeper areas of the CDF
-        # and lower density in flatter areas of the CDF
         # Density is given by the derivative of the CDF
-        x_cs = densityspace(self.min_x_, self.tail_, self.cdf_cs_.derivative())
+        x_cs = cumdensityspace(
+            self.min_x_, self.tail_, self.cdf_cs_, interp_num=1000
+        )
         y_cs = self.cdf_cs_(x_cs)
         self.inv_cdf_cs_ = PchipInterpolator(y_cs, x_cs)
 
         return self
 
-    def pdf(self, x_val):
-        return self.cdf_cs_.derivative()(
-            np.clip(x_val, self.min_x_, self.tail_)
-        )
+    def pdf(self, x):
+        """Estimated PDF.
 
-    def cdf(self, x_val):
-        return self.cdf_cs_(np.clip(x_val, self.min_x_, self.tail_))
+        Parameters
+        ----------
+        x: ndarray
+            Values to calculate the PDF of.
+
+        Returns
+        -------
+        pdf : ndarray
+            Estimated PDF values
+        """
+        return self.cdf_cs_.derivative()(np.clip(x, self.min_x_, self.tail_))
+
+    def cdf(self, x):
+        """Estimated CDF.
+
+        Parameters
+        ----------
+        x: ndarray
+            Values to calculate the CDF of.
+
+        Returns
+        -------
+        cdf : ndarray
+            Estimated CDF values
+        """
+        return self.cdf_cs_(np.clip(x, self.min_x_, self.tail_))
 
     def inv_cdf(self, percentile):
+        """Estimated inverse CDF.
+
+        Parameters
+        ----------
+        percentile: ndarray
+            Values to calculate the inverse CDF of
+
+        Returns
+        -------
+        inverse_cdf : ndarray
+            Estimated inverse CDF values
+        """
         return self.inv_cdf_cs_(np.clip(percentile, 0, 1))
