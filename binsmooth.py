@@ -52,7 +52,7 @@ def densityspace(
 
 
 class BinSmooth:
-    def fit(self, x, y, m=None, tail_0=None):
+    def fit(self, x, y, m=None, includes_tail=False):
         if m is None:
             # Adhoc mean estimate if none supplied
             m = np.average(
@@ -60,27 +60,31 @@ class BinSmooth:
                 weights=y / np.sum(y),
             )
 
-        if tail_0 is None:
-            # Temporarily set the tail value
-            tail_0 = x[-1] * 2
+        self.min_x_ = x[0]
 
-        x_wtail = np.concatenate([x, [tail_0]])
         y_ecdf = np.cumsum(y)
         y_ecdf_normed = y_ecdf / np.max(y_ecdf)
 
-        self.min_x_ = x[0]
+        if includes_tail is False:
+            # Temporarily set the tail value
+            tail_0 = x[-1] * 2
+            x_wtail = np.concatenate([x, [tail_0]])
 
-        # Search for a tail
-        self.tail_ = fmin(
-            optim,
-            tail_0,
-            args=(x_wtail.copy(), y_ecdf_normed, m),
-            maxiter=16,
-            disp=False,
-        )[0]
+            # Search for a tail
+            self.tail_ = fmin(
+                optim,
+                tail_0,
+                args=(x_wtail.copy(), y_ecdf_normed, m),
+                maxiter=16,
+                disp=False,
+            )[0]
+
+            x_wtail[-1] = self.tail_
+        else:
+            self.tail_ = x[-1]
+            x_wtail = x
 
         # Estimate the CDF by fitting a spline
-        x_wtail[-1] = self.tail_
         self.cdf_cs_ = PchipInterpolator(x_wtail, y_ecdf_normed)
 
         self.mean_est_ = estimate_mean(x_wtail[0], x_wtail[-1], self.cdf_cs_)
@@ -89,7 +93,7 @@ class BinSmooth:
         # Sample with higher density in steeper areas of the CDF
         # and lower density in flatter areas of the CDF
         # Density is given by the derivative of the CDF
-        x_cs = densityspace(0, self.tail_, self.cdf_cs_.derivative())
+        x_cs = densityspace(self.min_x_, self.tail_, self.cdf_cs_.derivative())
         y_cs = self.cdf_cs_(x_cs)
         self.inv_cdf_cs_ = PchipInterpolator(y_cs, x_cs)
 
