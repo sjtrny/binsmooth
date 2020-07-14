@@ -1,5 +1,7 @@
 # binsmooth
 
+[![Build Status](https://travis-ci.org/sjtrny/binsmooth.svg?branch=master)](https://travis-ci.org/sjtrny/binsmooth)
+
 Python implementation of "[Better Estimates from Binned Income Data][1]"
 
 	Better Estimates from Binned Income Data: Interpolated CDFs and Mean-Matching
