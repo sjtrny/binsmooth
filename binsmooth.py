@@ -53,12 +53,25 @@ def densityspace(
 
 class BinSmooth:
     def fit(self, x, y, m=None, includes_tail=False):
+
+        if includes_tail and len(x) != len(y):
+            raise ValueError(
+                "Length of x and y must match when tail is included"
+            )
+
+        if not includes_tail and len(x) != len(y) - 1:
+            raise ValueError(
+                "Length of x must be N-1 when tail is not included"
+            )
+
         if m is None:
             # Adhoc mean estimate if none supplied
-            m = np.average(
-                np.concatenate([x[:-1] / 2, [x[-1], x[-1] * 2]]),
-                weights=y / np.sum(y),
-            )
+            if includes_tail:
+                bin_edges = x
+            else:
+                bin_edges = np.concatenate([x[:-1] / 2, [x[-1], x[-1] * 2]])
+
+            m = np.average(bin_edges, weights=y / np.sum(y),)
 
         self.min_x_ = x[0]
 
