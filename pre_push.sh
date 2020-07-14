@@ -1,4 +1,5 @@
+#!/usr/bin/env bash
 black  --config pyproject.toml ./
-flake8
-#pytest
+flake8 --exclude=.git,*migrations*,venv,docs
+pytest
 #make -C docs/ html

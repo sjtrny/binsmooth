@@ -64,6 +64,9 @@ class BinSmooth:
                 "Length of x must be N-1 when tail is not included"
             )
 
+        if y[0] != 0:
+            raise ValueError("y must begin with 0")
+
         if m is None:
             # Adhoc mean estimate if none supplied
             if includes_tail:
