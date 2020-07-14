@@ -39,7 +39,7 @@ differences in spline implementation between R's splinefun and scipy's
 PchipInterpolator.
 
 **Accuracy** is highly dependent on the mean of the distribution. If you do
-supply a mean, then one will be estimated in an adhoc manner and the accuracy
+not supply a mean, then one will be estimated in an adhoc manner and the accuracy
 of estimates may be poor.
 
 [1]: https://sociologicalscience.com/download/vol-4/november/SocSci_v4_641to655.pdf
