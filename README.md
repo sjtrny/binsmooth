@@ -25,6 +25,12 @@ Originally implemented in the R package [`binsmooth`][2].
     # Print median estimate
     print(bs.inv_cdf(0.5))
 
+## Installation
+
+Install via pip
+
+    pip install binsmooth
+
 ## Improvements
 
 **Better tail estimate** by using scipy's fmin to perform automatic optimisation
