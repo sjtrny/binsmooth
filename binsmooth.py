@@ -284,7 +284,6 @@ class BinSmooth:
         self.mean_est_ = estimate_mean(x_wtail[0], x_wtail[-1], self.cdf_cs_)
 
         # Approximate inverse CDF by sampling the CDF
-        # Density is given by the derivative of the CDF
         x_cs = cumdensityspace(
             self.min_x_, self.tail_, self.cdf_cs_, interp_num=1000
         )
