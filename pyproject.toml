@@ -9,6 +9,10 @@ author-email = "sjtrny@gmail.com"
 home-page = "http://github.com/sjtrny/binsmooth"
 classifiers = ["License :: OSI Approved :: MIT License"]
 description-file = "README.md"
+requires = [
+    "numpy >= 1.19.0",
+    "scipy >= 1.5.1"
+]
 
 [tool.black]
 line-length = 79
