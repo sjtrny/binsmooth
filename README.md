@@ -42,13 +42,21 @@ areas, rather than evenly spaced sampling.
 
 ## Warnings
 
-**Results** will be different to the original R implementation due to
-differences in spline implementation between R's splinefun and scipy's
-PchipInterpolator.
+**Results** do not exactly match R `binsmooth`. Differences are due 
+to differences in tail estimation and spline interpolation. This implementation
+uses scipy's `PchipInterpolator` which implements \[1\], while the default
+interpolator in the R implementation is \[2\].
 
 **Accuracy** is highly dependent on the mean of the distribution. If you do
 not supply a mean, then one will be estimated in an adhoc manner and the accuracy
 of estimates may be poor.
 
+## References
+
+\[1\]: Fritsch, F. N. and Carlson, R. E. (1980). [Monotone piecewise cubic interpolation][3]. SIAM Journal on Numerical Analysis  
+\[2\]: Hyman, J. M. (1983). [Accurate monotonicity preserving cubic interpolation][4]. SIAM Journal on Scientific and Statistical Computing
+
 [1]: https://sociologicalscience.com/download/vol-4/november/SocSci_v4_641to655.pdf
 [2]: https://cran.r-project.org/web/packages/binsmooth/binsmooth.pdf
+[3]: http://www.ams.sunysb.edu/~jiao/teaching/ams527_spring13/lectures/SNA000238.pdf
+[4]: https://www.osti.gov/servlets/purl/5328033
