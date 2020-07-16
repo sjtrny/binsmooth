@@ -42,12 +42,15 @@ areas, rather than evenly spaced sampling.
 
 ## Warnings
 
-**Results** do not exactly match R `binsmooth`. Differences are due 
-to differences in tail estimation and spline interpolation. This implementation
-uses scipy's `PchipInterpolator` which implements \[1\], while the default
-interpolator in the R implementation is \[2\].
+**Results** do not exactly match R `binsmooth` because:
+1. we take a different approach to estimating the tail (upper bound)
+2. choice of spline interpolation
 
-**Accuracy** is highly dependent on the mean of the distribution. If you do
+This implementation uses scipy's `PchipInterpolator` which implements \[1\],
+while the default interpolator in the R implementation is \[2\]. The interpolator
+in the R implementation can be changed to \[1\] by setting `monoMethod="monoH.FC"`.
+
+**Accuracy** is dependent on the mean of the distribution. If you do
 not supply a mean, then one will be estimated in an adhoc manner and the accuracy
 of estimates may be poor.
 
