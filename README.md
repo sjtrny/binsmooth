@@ -63,6 +63,6 @@ of estimates may be poor.
 \[2\]: Hyman, J. M. (1983). [Accurate monotonicity preserving cubic interpolation][4]. SIAM Journal on Scientific and Statistical Computing
 
 [1]: https://sociologicalscience.com/download/vol-4/november/SocSci_v4_641to655.pdf
-[2]: https://cran.r-project.org/web/packages/binsmooth/binsmooth.pdf
+[2]: https://cran.r-project.org/web/packages/binsmooth/
 [3]: http://www.ams.sunysb.edu/~jiao/teaching/ams527_spring13/lectures/SNA000238.pdf
 [4]: https://www.osti.gov/servlets/purl/5328033
