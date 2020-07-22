@@ -14,6 +14,7 @@ import numpy as np
 from scipy.integrate import cumtrapz, trapz
 from scipy.interpolate import PchipInterpolator, interp1d
 from scipy.optimize import minimize
+import warnings
 
 
 def estimate_mean(lb, ub, cdf_fn, integral_num=50):
@@ -253,6 +254,8 @@ class BinSmooth:
                 bin_edges = np.concatenate([x[:-1] / 2, [x[-1], x[-1] * 2]])
 
             m = np.average(bin_edges, weights=y / np.sum(y),)
+
+            warnings.warn("No mean provided, results may be innacurate.")
 
         x = x.astype(float)
         y = y.astype(float)
