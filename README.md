@@ -1,5 +1,6 @@
 # binsmooth
 
+[![PyPI version](https://badge.fury.io/py/binsmooth.svg)](https://badge.fury.io/py/binsmooth)
 [![Build Status](https://travis-ci.org/sjtrny/binsmooth.svg?branch=master)](https://travis-ci.org/sjtrny/binsmooth)
 
 Python implementation of "[Better Estimates from Binned Income Data][1]"
@@ -30,6 +31,8 @@ Originally implemented in the R package [`binsmooth`][2].
 Install via pip
 
     pip install binsmooth
+
+pypi page [https://pypi.org/project/binsmooth/](https://pypi.org/project/binsmooth/)
 
 ## Improvements
 
