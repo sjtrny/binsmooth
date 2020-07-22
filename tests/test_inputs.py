@@ -10,10 +10,20 @@ def test_include_tail():
 
     bs = BinSmooth()
 
-    bs.fit(bin_edges, counts)
-
     with pytest.raises(
         ValueError, match="Length of x and y must match when tail is included"
+    ):
+        bs.fit(bin_edges, counts, includes_tail=True)
+
+
+def test_include_tail_increasing():
+    bin_edges = np.array([0, 18200, 37000, 87000, 180000, 180000])
+    counts = np.array([0, 7527, 13797, 75481, 50646, 803])
+
+    bs = BinSmooth()
+
+    with pytest.raises(
+        ValueError, match="Tail value must be greater than the last bin edge"
     ):
         bs.fit(bin_edges, counts, includes_tail=True)
 

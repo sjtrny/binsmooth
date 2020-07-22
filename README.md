@@ -33,12 +33,12 @@ Install via pip
 
 ## Improvements
 
-**Better tail estimate** by using scipy's fmin to perform automatic optimisation
-rather than the adhoc search method found in the R implementation.
+**Better tail estimate** by bounded optimisation rather than the adhoc search
+method found in the R implementation.
 
 **More precise inverse CDF** by dynamically sampling the CDF. This is done
-by sampling more densely in areas where the CDF is steeper and less in flatter
-areas, rather than evenly spaced sampling.
+by sampling proportional to the steepness of the CDF i.e. sampling more
+in areas where the CDF is steeper.
 
 ## Warnings
 

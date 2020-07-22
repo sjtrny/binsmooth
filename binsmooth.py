@@ -8,12 +8,12 @@ This module is a re-implementation of the R binsmooth package.
 #
 # License: MIT
 
-__version__ = "0.12"
+__version__ = "0.13"
 
 import numpy as np
 from scipy.integrate import cumtrapz, trapz
 from scipy.interpolate import PchipInterpolator, interp1d
-from scipy.optimize import fmin
+from scipy.optimize import minimize
 
 
 def estimate_mean(lb, ub, cdf_fn, integral_num=50):
@@ -254,6 +254,9 @@ class BinSmooth:
 
             m = np.average(bin_edges, weights=y / np.sum(y),)
 
+        x = x.astype(float)
+        y = y.astype(float)
+
         self.min_x_ = x[0]
 
         y_ecdf = np.cumsum(y)
@@ -265,16 +268,22 @@ class BinSmooth:
             x_wtail = np.concatenate([x, [tail_0]])
 
             # Search for a tail
-            self.tail_ = fmin(
+            self.tail_ = minimize(
                 evaluate_tail,
                 tail_0,
                 args=(x_wtail.copy(), y_ecdf_normed, m),
-                maxiter=16,
-                disp=False,
-            )[0]
+                bounds=[(180000, None)],
+                method="Powell",
+                options=dict(maxiter=16),
+            ).x[0]
 
             x_wtail[-1] = self.tail_
         else:
+            if x[-2] >= x[-1]:
+                raise ValueError(
+                    "Tail value must be greater than the last bin edge"
+                )
+
             self.tail_ = x[-1]
             x_wtail = x
 
