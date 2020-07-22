@@ -45,9 +45,9 @@ in areas where the CDF is steeper.
 
 ## Warnings
 
-**Results** do not exactly match R `binsmooth` because:
-1. we take a different approach to estimating the tail (upper bound)
-2. choice of spline interpolation
+**Results** may not exactly match R `binsmooth` because of:
+1. a different approach to estimating the tail (upper bound) and
+2. differences in the spline interpolation method
 
 This implementation uses scipy's `PchipInterpolator` which implements \[1\],
 while the default interpolator in the R implementation is \[2\]. The interpolator
