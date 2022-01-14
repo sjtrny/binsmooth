@@ -69,3 +69,12 @@ def test_edges_increasing():
 
     with pytest.raises(ValueError, match="x must be strictly increasing\\."):
         bs.fit(bin_edges, counts)
+
+
+def test_counts_negative():
+    bin_edges = np.array([0, 18200, 37000, 180000, 360000])
+    counts = np.array([0, 7527, 13797, -5, 50646, 803])
+    bs = BinSmooth()
+
+    with pytest.raises(ValueError, match="y contains negative values\\."):
+        bs.fit(bin_edges, counts)

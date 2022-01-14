@@ -267,8 +267,17 @@ class BinSmooth:
 
         self.min_x_ = x[0]
 
+        # Check for negative values in y
+        if np.any(y < 0):
+            raise ValueError("y contains negative values.")
+
         y_ecdf = np.cumsum(y)
         y_ecdf_normed = y_ecdf / np.max(y_ecdf)
+
+        # # If y is not strictly increasing warn
+        # dy = np.diff(y)
+        # if np.any(dy < 0):
+        #     warnings.warn("y is not increasing.")
 
         if includes_tail is False:
             if m is None:
