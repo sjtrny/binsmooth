@@ -48,3 +48,24 @@ def test_y_zero():
 
     with pytest.raises(ValueError, match="y must begin with 0"):
         bs.fit(bin_edges, counts)
+
+
+def test_mean_warning():
+
+    with pytest.warns(
+        UserWarning, match="No mean provided, results may be innacurate."
+    ) as record:
+        # Positive
+        bin_edges = np.array([0, 18200, 37000, 87000, 180000])
+        counts = np.array([0, 7527, 13797, 75481, 50646, 803])
+        bs = BinSmooth()
+        bs.fit(bin_edges, counts, includes_tail=False)
+
+        # Negative
+        bin_edges = np.array([0, 18200, 37000, 87000, 180000, 360000])
+        counts = np.array([0, 7527, 13797, 75481, 50646, 803])
+        bs = BinSmooth()
+        bs.fit(bin_edges, counts, includes_tail=True)
+
+    # Should only be 1 matching warning
+    assert len(record) == 1
