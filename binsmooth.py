@@ -247,16 +247,16 @@ class BinSmooth:
         """
         if includes_tail and len(x) != len(y):
             raise ValueError(
-                "Length of x and y must match when tail is included"
+                "Length of x and y must match when tail is included."
             )
 
         if not includes_tail and len(x) != len(y) - 1:
             raise ValueError(
-                "Length of x must be N-1 when tail is not included"
+                "Length of x must be N-1 when tail is not included."
             )
 
         if y[0] != 0:
-            raise ValueError("y must begin with 0")
+            raise ValueError("y must begin with 0.")
 
         x = x.astype(float)
         y = y.astype(float)
@@ -301,7 +301,7 @@ class BinSmooth:
         else:
             if x[-2] >= x[-1]:
                 raise ValueError(
-                    "Tail value must be greater than the last bin edge"
+                    "Tail value must be greater than the last bin edge."
                 )
 
             self.tail_ = x[-1]
