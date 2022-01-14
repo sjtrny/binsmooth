@@ -96,7 +96,12 @@ def interpolated_inverse(x, y, num, endpoint=True):
 
 
 def cumdensityspace(
-    start, stop, cdf_fn, num=50, interp_num=50, endpoint=True,
+    start,
+    stop,
+    cdf_fn,
+    num=50,
+    interp_num=50,
+    endpoint=True,
 ):
     """Return numbers over an interval spaced by a given CDF.
 
@@ -133,7 +138,12 @@ def cumdensityspace(
 
 
 def densityspace(
-    start, stop, density_fn, num=50, interp_num=50, endpoint=True,
+    start,
+    stop,
+    density_fn,
+    num=50,
+    interp_num=50,
+    endpoint=True,
 ):
     """Return numbers over an interval spaced by a given density.
 
@@ -268,7 +278,10 @@ class BinSmooth:
                         [x[:-1] / 2, [x[-1], x[-1] * 2]]
                     )
 
-                m = np.average(bin_edges, weights=y / np.sum(y),)
+                m = np.average(
+                    bin_edges,
+                    weights=y / np.sum(y),
+                )
 
             # Temporarily set the tail value
             tail_0 = x[-1] * 2
