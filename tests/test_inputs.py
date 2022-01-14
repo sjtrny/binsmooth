@@ -16,20 +16,6 @@ def test_include_tail():
     ):
         bs.fit(bin_edges, counts, includes_tail=True)
 
-
-def test_include_tail_increasing():
-    bin_edges = np.array([0, 18200, 37000, 87000, 180000, 180000])
-    counts = np.array([0, 7527, 13797, 75481, 50646, 803])
-
-    bs = BinSmooth()
-
-    with pytest.raises(
-        ValueError,
-        match="Tail value must be greater than the last bin edge\\.",
-    ):
-        bs.fit(bin_edges, counts, includes_tail=True)
-
-
 def test_not_include_tail():
     bin_edges = np.array([0, 18200, 37000, 87000, 180000, 360000])
     counts = np.array([0, 7527, 13797, 75481, 50646, 803])
@@ -49,7 +35,7 @@ def test_y_zero():
 
     bs = BinSmooth()
 
-    with pytest.raises(ValueError, match="y must begin with 0\."):
+    with pytest.raises(ValueError, match="y must begin with 0\\."):
         bs.fit(bin_edges, counts)
 
 
@@ -74,11 +60,11 @@ def test_mean_warning():
     assert len(record) == 1
 
 
-# def test_edges_increasing():
-#
-#     bin_edges = np.array([0, 18200, 37000, 87000, 180000, 180000])
-#     counts = np.array([0, 7527, 13797, 75481, 50646, 803])
-#     bs = BinSmooth()
-#
-#     with pytest.raises(ValueError, match="x must be strictly increasing\\."):
-#         bs.fit(bin_edges, counts)
+def test_edges_increasing():
+
+    bin_edges = np.array([0, 18200, 37000, 180000, 180000])
+    counts = np.array([0, 7527, 13797, 75481, 50646, 803])
+    bs = BinSmooth()
+
+    with pytest.raises(ValueError, match="x must be strictly increasing\\."):
+        bs.fit(bin_edges, counts)
