@@ -16,6 +16,7 @@ def test_include_tail():
     ):
         bs.fit(bin_edges, counts, includes_tail=True)
 
+
 def test_not_include_tail():
     bin_edges = np.array([0, 18200, 37000, 87000, 180000, 360000])
     counts = np.array([0, 7527, 13797, 75481, 50646, 803])
