@@ -271,15 +271,25 @@ class BinSmooth:
         if np.any(y < 0):
             raise ValueError("y contains negative values.")
 
+        # Check if last value of y is zero
+        # which would cause inverse CDF to fail
+        if np.isclose(y[-1], 0):
+            warnings.warn(
+                "x and y have been trimmed to remove trailing zeros in y."
+            )
+            y_len = len(y)
+            y = np.trim_zeros(y, "b")
+            n_trailing_zeros = y_len - len(y)
+            x = x[:-n_trailing_zeros]
+
         y_ecdf = np.cumsum(y)
         y_ecdf_normed = y_ecdf / np.max(y_ecdf)
 
-        # # If y is not strictly increasing warn
-        # dy = np.diff(y)
-        # if np.any(dy < 0):
-        #     warnings.warn("y is not increasing.")
+        if includes_tail:
+            self.tail_ = x[-1]
+            x_wtail = x
 
-        if includes_tail is False:
+        else:
             if m is None:
                 # Adhoc mean estimate if none supplied
                 warnings.warn("No mean provided, results may be innacurate.")
@@ -311,9 +321,6 @@ class BinSmooth:
             ).x[0]
 
             x_wtail[-1] = self.tail_
-        else:
-            self.tail_ = x[-1]
-            x_wtail = x
 
         # Estimate the CDF by fitting a spline
         self.cdf_cs_ = PchipInterpolator(x_wtail, y_ecdf_normed)
@@ -325,6 +332,7 @@ class BinSmooth:
             self.min_x_, self.tail_, self.cdf_cs_, interp_num=1000
         )
         y_cs = self.cdf_cs_(x_cs)
+
         self.inv_cdf_cs_ = PchipInterpolator(y_cs, x_cs)
 
         return self
