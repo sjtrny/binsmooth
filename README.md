@@ -1,7 +1,7 @@
 # binsmooth
 
 [![PyPI version](https://badge.fury.io/py/binsmooth.svg)](https://badge.fury.io/py/binsmooth)
-[![Build Status](https://github.com/sjtrny/binsmooth/actions/workflows/ci.yml/badge.svg)
+![Build Status](https://github.com/sjtrny/binsmooth/actions/workflows/ci.yml/badge.svg)
 
 Python implementation of "[Better Estimates from Binned Income Data][1]"
 
