@@ -69,3 +69,29 @@ def test_edges_increasing():
 
     with pytest.raises(ValueError, match="x must be strictly increasing\\."):
         bs.fit(bin_edges, counts)
+
+
+def test_counts_negative():
+    bin_edges = np.array([0, 18200, 37000, 180000, 360000])
+    counts = np.array([0, 7527, 13797, -5, 50646, 803])
+    bs = BinSmooth()
+
+    with pytest.raises(ValueError, match="y contains negative values\\."):
+        bs.fit(bin_edges, counts)
+
+
+def test_counts_last_zero():
+
+    with pytest.warns(
+        UserWarning,
+        match="x and y have been trimmed to remove trailing zeros in y.",
+    ):
+        bin_edges = np.array([0, 18200, 37000, 87000, 180000, 360000])
+        counts = np.array([0, 7527, 13797, 75481, 50646, 0])
+        bs = BinSmooth()
+        bs.fit(bin_edges, counts, includes_tail=True)
+
+        bin_edges = np.array([0, 18200, 37000, 87000, 180000])
+        counts = np.array([0, 7527, 13797, 75481, 50646, 0])
+        bs = BinSmooth()
+        bs.fit(bin_edges, counts, includes_tail=False)
