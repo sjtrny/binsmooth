@@ -53,10 +53,6 @@ This implementation uses scipy's `PchipInterpolator` which implements \[1\],
 while the default interpolator in the R implementation is \[2\]. The interpolator
 in the R implementation can be changed to \[1\] by setting `monoMethod="monoH.FC"`.
 
-**Accuracy** is dependent on the mean of the distribution. If you do
-not supply a mean, then one will be estimated in an adhoc manner and the accuracy
-of estimates may be poor.
-
 ## References
 
 \[1\]: Fritsch, F. N. and Carlson, R. E. (1980). [Monotone piecewise cubic interpolation][3]. SIAM Journal on Numerical Analysis  
