@@ -8,7 +8,7 @@ This module is a re-implementation of the R binsmooth package.
 #
 # License: MIT
 
-__version__ = "0.14"
+__version__ = "0.15"
 
 import numpy as np
 from scipy.integrate import cumtrapz, trapz
