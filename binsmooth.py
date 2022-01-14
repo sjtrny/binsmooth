@@ -213,7 +213,7 @@ class BinSmooth:
     70120.071...
     """
 
-    def fit(self, x, y, m=None, includes_tail=False):
+    def fit(self, x, y, includes_tail=False, m=None):
         """Fit the cubic spline to the data.
 
         Parameters
@@ -222,11 +222,13 @@ class BinSmooth:
             The bin edges
         y: ndarray
             The values for each bin
-        m: float
-            The mean of the distribution
         includes_tail: bool
             If True then it is assumed that the last value in x is the upper
             bound of the distribution, otherwise the upper bound is estimated
+        m: float
+            The mean of the distribution, used to estimate the tail value when
+            `includes_tail` is False. If this parameter is not provided then
+            an adhoc estimate will be used which may affect accuracy.
 
         Returns
         -------
@@ -246,17 +248,6 @@ class BinSmooth:
         if y[0] != 0:
             raise ValueError("y must begin with 0")
 
-        if m is None:
-            # Adhoc mean estimate if none supplied
-            if includes_tail:
-                bin_edges = x
-            else:
-                bin_edges = np.concatenate([x[:-1] / 2, [x[-1], x[-1] * 2]])
-
-            m = np.average(bin_edges, weights=y / np.sum(y),)
-
-            warnings.warn("No mean provided, results may be innacurate.")
-
         x = x.astype(float)
         y = y.astype(float)
 
@@ -266,6 +257,19 @@ class BinSmooth:
         y_ecdf_normed = y_ecdf / np.max(y_ecdf)
 
         if includes_tail is False:
+            if m is None:
+                # Adhoc mean estimate if none supplied
+                warnings.warn("No mean provided, results may be innacurate.")
+
+                if includes_tail:
+                    bin_edges = x
+                else:
+                    bin_edges = np.concatenate(
+                        [x[:-1] / 2, [x[-1], x[-1] * 2]]
+                    )
+
+                m = np.average(bin_edges, weights=y / np.sum(y),)
+
             # Temporarily set the tail value
             tail_0 = x[-1] * 2
             x_wtail = np.concatenate([x, [tail_0]])
