@@ -4,4 +4,4 @@ flit==3.6.0
 numpy==1.22.0
 pydocstyle==6.1.1
 pytest==6.2.5
-scipy==1.7.3
+scipy==1.10.0
