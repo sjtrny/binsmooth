@@ -14,12 +14,12 @@ import warnings
 
 import numdifftools as nd
 import numpy as np
-from scipy.integrate import cumtrapz, trapz
+from scipy.integrate import cumtrapz, romb
 from scipy.interpolate import PchipInterpolator, interp1d
 from scipy.optimize import minimize
 
 
-def estimate_mean(lb, ub, cdf_fn, integral_num=50):
+def estimate_mean(x, cdf_fn, integral_pow=10):
     """Estimate the mean from a CDF.
 
     Parameters
@@ -39,38 +39,11 @@ def estimate_mean(lb, ub, cdf_fn, integral_num=50):
     mean: float
         The estimated mean
     """
-    x_integral = np.linspace(lb, ub, integral_num)
-
-    return ub - trapz(cdf_fn(x_integral), x_integral)
-
-
-def evaluate_tail(tail, x, y, mean):
-    """Evaluate a tail value proposal.
-
-    Parameters
-    ----------
-    tail: float
-        The proposed tail value.
-    x: ndarray
-        The bin boundaries.
-    y: ndarray
-        The bin values.
-    mean: float
-        The target mean value
-
-    Returns
-    -------
-    loss: float
-        The loss associated with the tail proposal
-    """
-    # Use current tail guess
-    x[-1] = tail
-    # Fit spline
-    cdf = PchipInterpolator(x, y)
-    # Estimate mean
-    est_mean = estimate_mean(x[0], x[-1], cdf)
-    # Calculate loss
-    return (mean - est_mean) ** 2
+    integral_num = 1 + 2**integral_pow
+    x_integral, dx = np.linspace(
+        x[0], x[-1], integral_num, endpoint=True, retstep=True
+    )
+    return romb(1 - cdf_fn(x_integral), dx=dx)
 
 
 def interpolated_inverse(x, y, num, endpoint=True):
@@ -308,26 +281,51 @@ class BinSmooth:
                     weights=y / np.sum(y),
                 )
 
-            # Temporarily set the tail value
-            tail_0 = x[-1] * 2
+            # Temporarily set the tail bounds to slightly above x[-1] and largest possible float value
+            tail_0 = x[-1] + np.finfo(np.float32).eps
+            tail_1 = np.finfo(np.float32).max
             x_wtail = np.concatenate([x, [tail_0]])
 
-            # Search for a tail
+            def evaluate_tail(tail, x, y, cdf_f, estimator, target):
+                # Use current tail guess
+                x[-1] = tail
+                # Fit spline
+                cdf = cdf_f(x, y)
+                # Estimate mean
+                est_val = estimator(x, cdf)
+                # Calculate loss
+                return (target - est_val) ** 2
+
             self.tail_ = minimize(
                 evaluate_tail,
                 tail_0,
-                args=(x_wtail.copy(), y_ecdf_normed, m),
-                bounds=[(180000, None)],
-                method="Powell",
-                options=dict(maxiter=16),
+                args=(
+                    x_wtail.copy(),
+                    y_ecdf_normed,
+                    PchipInterpolator,
+                    estimate_mean,
+                    m,
+                ),
+                bounds=[(tail_0, tail_1)],
+                method="Nelder-Mead",
             ).x[0]
+
+            # # Search for a tail
+            # self.tail_ = minimize(
+            #     evaluate_tail,
+            #     tail_0,
+            #     args=(x_wtail.copy(), y_ecdf_normed, m),
+            #     bounds=[(180000, None)],
+            #     method="Powell",
+            #     options=dict(maxiter=16),
+            # ).x[0]
 
             x_wtail[-1] = self.tail_
 
         # Estimate the CDF by fitting a spline
         self.cdf_cs_ = PchipInterpolator(x_wtail, y_ecdf_normed)
 
-        self.mean_est_ = estimate_mean(x_wtail[0], x_wtail[-1], self.cdf_cs_)
+        self.mean_est_ = estimate_mean(x_wtail, self.cdf_cs_)
 
         # Approximate inverse CDF by sampling the CDF
         x_cs = cumdensityspace(
