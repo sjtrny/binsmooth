@@ -14,6 +14,7 @@ import warnings
 
 import numdifftools as nd
 import numpy as np
+import splines
 from scipy.integrate import cumtrapz, romb
 from scipy.interpolate import PchipInterpolator, interp1d
 from scipy.optimize import minimize
@@ -158,6 +159,16 @@ def densityspace(
     return interpolated_inverse(xs, cps, num=num, endpoint=endpoint)
 
 
+class Hyman:
+    def __init__(self, x, y):
+        self.x_min = x[0]
+        self.x_max = x[-1]
+        self.obj = splines.PiecewiseMonotoneCubic(y, grid=x, closed=False)
+
+    def __call__(self, x):
+        return self.obj.evaluate(np.clip(x, self.x_min, self.x_max), 0)
+
+
 class BinSmooth:
     """A binned data smoother.
 
@@ -198,7 +209,7 @@ class BinSmooth:
     70120.071...
     """
 
-    def fit(self, x, y, includes_tail=False, m=None):
+    def fit(self, x, y, spline_type="PCHIP", includes_tail=False, m=None):
         """Fit the cubic spline to the data.
 
         Parameters
@@ -207,6 +218,11 @@ class BinSmooth:
             The bin edges
         y: ndarray
             The values for each bin
+        spline_type: str, default=`PCHIP`
+            The type of spline to use. Either:
+            - `PCHIP`: use scipy.interpolate.PchipInterpolator;
+            - `HYMAN`: use splines.PiecewiseMonotoneCubic;
+            - `LINEAR`: use scipy.interpolate.interp1d
         includes_tail: bool
             If True then it is assumed that the last value in x is the upper
             bound of the distribution, otherwise the upper bound is estimated
@@ -220,6 +236,18 @@ class BinSmooth:
         self : object
             Fitted estimator.
         """
+        spline_function_map = {
+            "PCHIP": PchipInterpolator,
+            "HYMAN": Hyman,
+            "LINEAR": interp1d,
+        }
+        if spline_type not in spline_function_map:
+            raise ValueError(
+                f"Invalid spline type. Must be one of {spline_function_map.keys()}."
+            )
+
+        self.f = spline_function_map[spline_type]
+
         if includes_tail and len(x) != len(y):
             raise ValueError(
                 "Length of x and y must match when tail is included."
@@ -302,7 +330,7 @@ class BinSmooth:
                 args=(
                     x_wtail.copy(),
                     y_ecdf_normed,
-                    PchipInterpolator,
+                    self.f,
                     estimate_mean,
                     m,
                 ),
@@ -310,20 +338,19 @@ class BinSmooth:
                 method="Nelder-Mead",
             ).x[0]
 
-            # # Search for a tail
-            # self.tail_ = minimize(
-            #     evaluate_tail,
-            #     tail_0,
-            #     args=(x_wtail.copy(), y_ecdf_normed, m),
-            #     bounds=[(180000, None)],
-            #     method="Powell",
-            #     options=dict(maxiter=16),
-            # ).x[0]
-
             x_wtail[-1] = self.tail_
 
         # Estimate the CDF by fitting a spline
-        self.cdf_cs_ = PchipInterpolator(x_wtail, y_ecdf_normed)
+        spline_fit_param_map = {
+            "PCHIP": {},
+            "HYMAN": {},
+            "LINEAR": dict(
+                fill_value=(0, y_ecdf_normed[-1]), bounds_error=False
+            ),
+        }
+        self.cdf_cs_ = self.f(
+            x_wtail, y_ecdf_normed, **spline_fit_param_map[spline_type]
+        )
 
         self.mean_est_ = estimate_mean(x_wtail, self.cdf_cs_)
 
@@ -333,7 +360,7 @@ class BinSmooth:
         )
         y_cs = self.cdf_cs_(x_cs)
 
-        self.inv_cdf_cs_ = PchipInterpolator(y_cs, x_cs)
+        self.inv_cdf_cs_ = interp1d(y_cs, x_cs)
 
         return self
 
