@@ -5,6 +5,7 @@ from binsmooth import BinSmooth
 
 spline_types = ["PCHIP", "HYMAN", "LINEAR"]
 
+
 @pytest.mark.parametrize("spline_type", spline_types)
 def test_bounds_one_val(spline_type):
     bin_edges = np.array([0, 18200, 37000, 87000, 180000])
@@ -16,7 +17,14 @@ def test_bounds_one_val(spline_type):
         ValueError,
         match="tail_bounds must only contain an upper and lower bound\\.",
     ):
-        bs.fit(bin_edges, counts, spline_type=spline_type, includes_tail=False, tail_bounds=[1])
+        bs.fit(
+            bin_edges,
+            counts,
+            spline_type=spline_type,
+            includes_tail=False,
+            tail_bounds=[1],
+        )
+
 
 @pytest.mark.parametrize("spline_type", spline_types)
 def test_bounds_extra_val(spline_type):
@@ -29,7 +37,14 @@ def test_bounds_extra_val(spline_type):
         ValueError,
         match="tail_bounds must only contain an upper and lower bound\\.",
     ):
-        bs.fit(bin_edges, counts, spline_type=spline_type, includes_tail=False, tail_bounds=[1,2,3])
+        bs.fit(
+            bin_edges,
+            counts,
+            spline_type=spline_type,
+            includes_tail=False,
+            tail_bounds=[1, 2, 3],
+        )
+
 
 @pytest.mark.parametrize("spline_type", spline_types)
 def test_bounds_low_val(spline_type):
@@ -42,7 +57,14 @@ def test_bounds_low_val(spline_type):
         ValueError,
         match="The lower bound of tail_bounds must be greater than the last value in x\\.",
     ):
-        bs.fit(bin_edges, counts, spline_type=spline_type, includes_tail=False, tail_bounds=[bin_edges[-1], None])
+        bs.fit(
+            bin_edges,
+            counts,
+            spline_type=spline_type,
+            includes_tail=False,
+            tail_bounds=[bin_edges[-1], None],
+        )
+
 
 @pytest.mark.parametrize("spline_type", spline_types)
 def test_bounds_low_val(spline_type):
@@ -55,12 +77,13 @@ def test_bounds_low_val(spline_type):
         ValueError,
         match="The upper bound of tail_bounds must be greater the lower bound\\.",
     ):
-        bs.fit(bin_edges, counts, spline_type=spline_type, includes_tail=False, tail_bounds=[None, bin_edges[-1]])
-
-
-
-
-
+        bs.fit(
+            bin_edges,
+            counts,
+            spline_type=spline_type,
+            includes_tail=False,
+            tail_bounds=[None, bin_edges[-1]],
+        )
 
 
 # @pytest.mark.parametrize("spline_type", spline_types)
