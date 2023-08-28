@@ -31,7 +31,13 @@ def test_not_include_tail(spline_type):
         ValueError,
         match="Length of x must be N-1 when tail is not included\\.",
     ):
-        bs.fit(bin_edges, counts, spline_type=spline_type, includes_tail=False)
+        bs.fit(
+            bin_edges,
+            counts,
+            spline_type=spline_type,
+            includes_tail=False,
+            m=120000,
+        )
 
 
 @pytest.mark.parametrize("spline_type", spline_types)
@@ -43,28 +49,6 @@ def test_y_zero(spline_type):
 
     with pytest.raises(ValueError, match="y must begin with 0\\."):
         bs.fit(bin_edges, counts, spline_type=spline_type)
-
-
-@pytest.mark.parametrize("spline_type", spline_types)
-def test_mean_warning(spline_type):
-    with pytest.warns(
-        UserWarning, match="No mean provided, results may be innacurate\\."
-    ) as record:
-        # Positive
-        bin_edges = np.array([0, 18200, 37000, 87000, 180000])
-        counts = np.array([0, 7527, 13797, 75481, 50646, 803])
-        bs = BinSmooth()
-        bs.fit(bin_edges, counts, spline_type=spline_type, includes_tail=False)
-
-        # Negative
-        bin_edges = np.array([0, 18200, 37000, 87000, 180000, 360000])
-        counts = np.array([0, 7527, 13797, 75481, 50646, 803])
-        bs = BinSmooth()
-        bs.fit(bin_edges, counts, spline_type=spline_type, includes_tail=True)
-
-    # Should only be 1 matching warning
-    assert len(record) == 1
-
 
 @pytest.mark.parametrize("spline_type", spline_types)
 def test_edges_increasing(spline_type):
@@ -100,4 +84,10 @@ def test_counts_last_zero(spline_type):
         bin_edges = np.array([0, 18200, 37000, 87000, 180000])
         counts = np.array([0, 7527, 13797, 75481, 50646, 0])
         bs = BinSmooth()
-        bs.fit(bin_edges, counts, spline_type=spline_type, includes_tail=False)
+        bs.fit(
+            bin_edges,
+            counts,
+            spline_type=spline_type,
+            includes_tail=False,
+            m=120000,
+        )

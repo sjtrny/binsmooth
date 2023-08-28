@@ -215,6 +215,7 @@ class BinSmooth:
         y,
         spline_type="PCHIP",
         includes_tail=False,
+        tail_method="mean",
         tail_bounds=None,
         m=None,
     ):
@@ -231,17 +232,25 @@ class BinSmooth:
             - `PCHIP`: use scipy.interpolate.PchipInterpolator;
             - `HYMAN`: use splines.PiecewiseMonotoneCubic;
             - `LINEAR`: use scipy.interpolate.interp1d
-        includes_tail: bool
+        includes_tail: bool, default=False
             If True then it is assumed that the last value in x is the upper
             bound of the distribution, otherwise the upper bound is estimated
+        tail_method: str, default=`mean`
+            The method used to estimate tail value of the distribution when
+            `includes_tail` is False. Either:
+            - `mean`: tail is selected so mean of distribution matches the given mean value `m`;
+            - `auc`: tail is selected so that area under the curve of the PDF is 1;
         tail_bounds: tuple, default=None
             Constrain the search of the tail point to this range. Either:
             - `None`: search is unrestricted;
             - `(lb, ub)`: search is limited between lb (lower bound) and ub (upper bound);
-        m: float
+        m: float, default=None
             The mean of the distribution, used to estimate the tail value when
-            `includes_tail` is False. If this parameter is not provided then
-            an adhoc estimate will be used which may affect accuracy.
+            `includes_tail` is False and `tail_method` is `mean`.
+        tail_slope: float, default=None
+            The maximum slope value in the tail when `includes_tail` is False
+            and `tail_method` is `slope`.
+
 
         Returns
         -------
@@ -303,28 +312,10 @@ class BinSmooth:
         if includes_tail:
             self.tail_ = x[-1]
             x_wtail = x
-
         else:
-            if m is None:
-                # Adhoc mean estimate if none supplied
-                warnings.warn("No mean provided, results may be innacurate.")
-
-                if includes_tail:
-                    bin_edges = x
-                else:
-                    bin_edges = np.concatenate(
-                        [x[:-1] / 2, [x[-1], x[-1] * 2]]
-                    )
-
-                m = np.average(
-                    bin_edges,
-                    weights=y / np.sum(y),
-                )
-
             # Temporarily set the tail bounds to slightly above x[-1] and largest possible float value
             tail_0 = x[-1] + np.finfo(np.float32).eps
             tail_1 = np.finfo(np.float32).max
-
             # Override tail bounds if supplied
             if tail_bounds:
                 if len(tail_bounds) != 2:
@@ -344,10 +335,37 @@ class BinSmooth:
                         raise ValueError(
                             "The upper bound of tail_bounds must be greater the lower bound."
                         )
-
                     tail_1 = tail_bounds[1]
 
             x_wtail = np.concatenate([x, [tail_0]])
+
+            if tail_method == "mean":
+                if m is None:
+                    raise ValueError(
+                        "A value for m must be provided when tail_method is 'mean'."
+                    )
+
+                estimator = estimate_mean
+                target = m
+
+            elif tail_method == "auc":
+
+                def auc_estimator(x, cdf_f):
+                    integral_pow = 5
+                    integral_num = 1 + 2**integral_pow
+
+                    x_integral, dx = np.linspace(
+                        x[0], x[-1], integral_num, endpoint=True, retstep=True
+                    )
+                    df = nd.Derivative(cdf_f, n=1, method="backward")
+                    dxs = df(x_integral)
+                    est_sum = romb(dxs, dx=dx)
+                    return est_sum
+
+                estimator = auc_estimator
+                target = 1
+            else:
+                raise ValueError("Invalid tail_method selected.")
 
             def evaluate_tail(tail, x, y, cdf_f, estimator, target):
                 # Use current tail guess
@@ -366,8 +384,8 @@ class BinSmooth:
                     x_wtail.copy(),
                     y_ecdf_normed,
                     self.f,
-                    estimate_mean,
-                    m,
+                    estimator,
+                    target,
                 ),
                 bounds=[(tail_0, tail_1)],
                 method="Nelder-Mead",
