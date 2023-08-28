@@ -209,7 +209,7 @@ class BinSmooth:
     70120.071...
     """
 
-    def fit(self, x, y, spline_type="PCHIP", includes_tail=False, m=None):
+    def fit(self, x, y, spline_type="PCHIP", includes_tail=False, tail_bounds=None, m=None):
         """Fit the cubic spline to the data.
 
         Parameters
@@ -226,6 +226,10 @@ class BinSmooth:
         includes_tail: bool
             If True then it is assumed that the last value in x is the upper
             bound of the distribution, otherwise the upper bound is estimated
+        tail_bounds: tuple, default=None
+            Constrain the search of the tail point to this range. Either:
+            - `None`: search is unrestricted;
+            - `(lb, ub)`: search is limited between lb (lower bound) and ub (upper bound);
         m: float
             The mean of the distribution, used to estimate the tail value when
             `includes_tail` is False. If this parameter is not provided then
@@ -312,6 +316,23 @@ class BinSmooth:
             # Temporarily set the tail bounds to slightly above x[-1] and largest possible float value
             tail_0 = x[-1] + np.finfo(np.float32).eps
             tail_1 = np.finfo(np.float32).max
+
+            # Override tail bounds if supplied
+            if tail_bounds:
+                if len(tail_bounds) != 2:
+                    raise ValueError("tail_bounds must only contain an upper and lower bound.")
+
+                if tail_bounds[0]:
+                    if tail_bounds[0] <= x[-1]:
+                        raise ValueError("The lower bound of tail_bounds must be greater than the last value in x.")
+                    tail_0 = tail_bounds[0]
+
+                if tail_bounds[1]:
+                    if tail_bounds[1] <= tail_0:
+                        raise ValueError("The upper bound of tail_bounds must be greater the lower bound.")
+
+                    tail_1 = tail_bounds[1]
+
             x_wtail = np.concatenate([x, [tail_0]])
 
             def evaluate_tail(tail, x, y, cdf_f, estimator, target):
