@@ -10,11 +10,13 @@ This module is a re-implementation of the R binsmooth package.
 
 __version__ = "0.15"
 
+import warnings
+
+import numdifftools as nd
 import numpy as np
 from scipy.integrate import cumtrapz, trapz
 from scipy.interpolate import PchipInterpolator, interp1d
 from scipy.optimize import minimize
-import warnings
 
 
 def estimate_mean(lb, ub, cdf_fn, integral_num=50):
@@ -350,7 +352,20 @@ class BinSmooth:
         pdf : ndarray
             Estimated PDF values
         """
-        return self.cdf_cs_.derivative()(np.clip(x, self.min_x_, self.tail_))
+
+        # Compute foward derivative below last bin
+        # Otherwise compute backward
+        def f(x):
+            if x <= self.x[-1]:
+                method = "backward"
+            else:
+                method = "forward"
+
+            df = nd.Derivative(self.cdf, n=1, method=method)
+
+            return df(np.clip(x, self.min_x_, self.tail_))
+
+        return np.clip(np.vectorize(f)(x), 0, None)
 
     def cdf(self, x):
         """Estimated CDF.
@@ -365,7 +380,7 @@ class BinSmooth:
         cdf : ndarray
             Estimated CDF values
         """
-        return self.cdf_cs_(np.clip(x, self.min_x_, self.tail_))
+        return np.clip(self.cdf_cs_(np.clip(x, self.min_x_, self.tail_)), 0, 1)
 
     def inv_cdf(self, percentile):
         """Estimated inverse CDF.

@@ -41,7 +41,6 @@ def test_y_zero():
 
 
 def test_mean_warning():
-
     with pytest.warns(
         UserWarning, match="No mean provided, results may be innacurate\\."
     ) as record:
@@ -62,7 +61,6 @@ def test_mean_warning():
 
 
 def test_edges_increasing():
-
     bin_edges = np.array([0, 18200, 37000, 180000, 180000])
     counts = np.array([0, 7527, 13797, 75481, 50646, 803])
     bs = BinSmooth()
@@ -81,7 +79,6 @@ def test_counts_negative():
 
 
 def test_counts_last_zero():
-
     with pytest.warns(
         UserWarning,
         match="x and y have been trimmed to remove trailing zeros in y.",
