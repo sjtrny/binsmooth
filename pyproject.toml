@@ -10,6 +10,7 @@ home-page = "http://github.com/sjtrny/binsmooth"
 classifiers = ["License :: OSI Approved :: MIT License"]
 description-file = "README.md"
 requires = [
+    "numdifftools == 0.9.41",
     "numpy >= 1.19.0",
     "scipy >= 1.5.1"
 ]
