@@ -19,9 +19,10 @@ Originally implemented in the R package [`binsmooth`][2].
 
     bin_edges = np.array([0, 18200, 37000, 87000, 180000])
     counts = np.array([0, 7527, 13797, 75481, 50646, 803])
+		mean_estimate = 95000
 
     bs = BinSmooth()
-    bs.fit(bin_edges, counts)
+    bs.fit(bin_edges, counts, m=mean_estimate)
 
     # Print median estimate
     print(bs.inv_cdf(0.5))
