@@ -51,7 +51,7 @@ to estimating the tail (upper bound).
 
 Furthermore the `fit` method uses `spline_type="PCHIP"` by default, which is
 scipy's `PchipInterpolator` \[1\]. While the R implementation uses the spline
-from \[2\], which can be mimiced by setting `spline_type="HYMAN"`.
+from \[2\], which can be mimicked by setting `spline_type="HYMAN"`.
 
 ## References
 
