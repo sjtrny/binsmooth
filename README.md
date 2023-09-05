@@ -49,7 +49,7 @@ in areas where the CDF is steeper.
 **Results** may not exactly match R `binsmooth` because of a different approach
 to estimating the tail (upper bound).
 
-Furthermore the `fit` method uses `spline_type="HYMAN"` as a default, which is
+Furthermore the `fit` method uses `spline_type="PCHIP"` by default, which is
 scipy's `PchipInterpolator` \[1\]. While the R implementation uses the spline
 from \[2\], which can be mimiced by setting `spline_type="HYMAN"`.
 
