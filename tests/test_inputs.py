@@ -50,6 +50,7 @@ def test_y_zero(spline_type):
     with pytest.raises(ValueError, match="y must begin with 0\\."):
         bs.fit(bin_edges, counts, spline_type=spline_type)
 
+
 @pytest.mark.parametrize("spline_type", spline_types)
 def test_edges_increasing(spline_type):
     bin_edges = np.array([0, 18200, 37000, 180000, 180000])

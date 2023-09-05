@@ -16,13 +16,13 @@ Originally implemented in the R package [`binsmooth`][2].
 ## Usage
 
     from binsmooth import BinSmooth
-    
+
     bin_edges = np.array([0, 18200, 37000, 87000, 180000])
     counts = np.array([0, 7527, 13797, 75481, 50646, 803])
-    
+
     bs = BinSmooth()
     bs.fit(bin_edges, counts)
-    
+
     # Print median estimate
     print(bs.inv_cdf(0.5))
 
@@ -45,13 +45,12 @@ in areas where the CDF is steeper.
 
 ## Warnings
 
-**Results** may not exactly match R `binsmooth` because of:
-1. a different approach to estimating the tail (upper bound) and
-2. differences in the spline interpolation method
+**Results** may not exactly match R `binsmooth` because of a different approach
+to estimating the tail (upper bound).
 
-This implementation uses scipy's `PchipInterpolator` which implements \[1\],
-while the default interpolator in the R implementation is \[2\]. The interpolator
-in the R implementation can be changed to \[1\] by setting `monoMethod="monoH.FC"`.
+Furthermore the `fit` method uses `spline_type="HYMAN"` as a default, which is
+scipy's `PchipInterpolator` \[1\]. While the R implementation uses the spline
+from \[2\], which can be mimiced by setting `spline_type="HYMAN"`.
 
 ## References
 

@@ -16,7 +16,7 @@ jobs:
         pip install -r requirements_build.txt
     - name: Lint with black
       run: |
-        black --config pyproject.toml --check ./
+        black --preview --config pyproject.toml --check ./
     - name: Flake8
       run: |
         flake8 --exclude=.git,*migrations*,venv,docs

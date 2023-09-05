@@ -8,7 +8,7 @@ This module is a re-implementation of the R binsmooth package.
 #
 # License: MIT
 
-__version__ = "0.15"
+__version__ = "2023.9.0"
 
 import warnings
 
@@ -160,12 +160,36 @@ def densityspace(
 
 
 class Hyman:
+    """A wrapper for the Hyman spline provided by the splines package.
+
+    Attributes
+    ----------
+    x_min: float
+        The minimum value along the x-axis
+    x_max: float
+        The maximum value along the x-axis
+    obj: splines.PiecewiseMonotoneCubic
+        An instance of the Hyman spline object that is being wrapped
+    """
+
     def __init__(self, x, y):
         self.x_min = x[0]
         self.x_max = x[-1]
         self.obj = splines.PiecewiseMonotoneCubic(y, grid=x, closed=False)
 
     def __call__(self, x):
+        """Evaluate the spline at x or for every element of x.
+
+        Parameters
+        ----------
+        x: float, ndarray
+            The position or positions to evaluate the spline at.
+
+        Returns
+        -------
+        est : float, ndarray
+            Value of the spline
+        """
         return self.obj.evaluate(np.clip(x, self.x_min, self.x_max), 0)
 
 
@@ -238,12 +262,15 @@ class BinSmooth:
         tail_method: str, default=`mean`
             The method used to estimate tail value of the distribution when
             `includes_tail` is False. Either:
-            - `mean`: tail is selected so mean of distribution matches the given mean value `m`;
-            - `auc`: tail is selected so that area under the curve of the PDF is 1;
+            - `mean`: tail is selected so mean of distribution matches the
+                given mean value `m`;
+            - `auc`: tail is selected so that area under the curve of the PDF
+                is 1;
         tail_bounds: tuple, default=None
             Constrain the search of the tail point to this range. Either:
             - `None`: search is unrestricted;
-            - `(lb, ub)`: search is limited between lb (lower bound) and ub (upper bound);
+            - `(lb, ub)`: search is limited between lb (lower bound) and
+                ub (upper bound);
         m: float, default=None
             The mean of the distribution, used to estimate the tail value when
             `includes_tail` is False and `tail_method` is `mean`.
@@ -264,7 +291,8 @@ class BinSmooth:
         }
         if spline_type not in spline_function_map:
             raise ValueError(
-                f"Invalid spline type. Must be one of {spline_function_map.keys()}."
+                "Invalid spline type. Must be one of"
+                f" {spline_function_map.keys()}."
             )
 
         self.f = spline_function_map[spline_type]
@@ -313,27 +341,31 @@ class BinSmooth:
             self.tail_ = x[-1]
             x_wtail = x
         else:
-            # Temporarily set the tail bounds to slightly above x[-1] and largest possible float value
+            # Temporarily set the tail bounds to slightly above x[-1] and
+            # largest possible float value
             tail_0 = x[-1] + np.finfo(np.float32).eps
             tail_1 = np.finfo(np.float32).max
             # Override tail bounds if supplied
             if tail_bounds:
                 if len(tail_bounds) != 2:
                     raise ValueError(
-                        "tail_bounds must only contain an upper and lower bound."
+                        "tail_bounds must only contain an upper and lower"
+                        " bound."
                     )
 
                 if tail_bounds[0]:
                     if tail_bounds[0] <= x[-1]:
                         raise ValueError(
-                            "The lower bound of tail_bounds must be greater than the last value in x."
+                            "The lower bound of tail_bounds must be greater"
+                            " than the last value in x."
                         )
                     tail_0 = tail_bounds[0]
 
                 if tail_bounds[1]:
                     if tail_bounds[1] <= tail_0:
                         raise ValueError(
-                            "The upper bound of tail_bounds must be greater the lower bound."
+                            "The upper bound of tail_bounds must be greater"
+                            " the lower bound."
                         )
                     tail_1 = tail_bounds[1]
 
@@ -342,7 +374,8 @@ class BinSmooth:
             if tail_method == "mean":
                 if m is None:
                     raise ValueError(
-                        "A value for m must be provided when tail_method is 'mean'."
+                        "A value for m must be provided when tail_method is"
+                        " 'mean'."
                     )
 
                 estimator = estimate_mean
@@ -431,9 +464,9 @@ class BinSmooth:
             Estimated PDF values
         """
 
-        # Compute foward derivative below last bin
-        # Otherwise compute backward
         def f(x):
+            # Compute foward derivative below last bin
+            # Otherwise compute backward
             if x <= self.x[-1]:
                 method = "backward"
             else:
