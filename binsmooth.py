@@ -307,8 +307,8 @@ class BinSmooth:
                 "Length of x must be N-1 when tail is not included."
             )
 
-        x = x.astype(float)
-        y = y.astype(float)
+        x = x.astype(np.float64)
+        y = y.astype(np.float64)
 
         if y[0] != 0:
             raise ValueError("y must begin with 0.")
@@ -343,8 +343,10 @@ class BinSmooth:
         else:
             # Temporarily set the tail bounds to slightly above x[-1] and
             # largest possible float value
-            tail_0 = x[-1] + np.finfo(np.float32).eps
-            tail_1 = np.finfo(np.float32).max
+            tail_0 = (
+                x[-1] + np.finfo(np.float32).eps
+            )  # float64.eps is too small
+            tail_1 = np.finfo(np.float64).max
             # Override tail bounds if supplied
             if tail_bounds:
                 if len(tail_bounds) != 2:
