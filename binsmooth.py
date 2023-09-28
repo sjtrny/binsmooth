@@ -25,15 +25,13 @@ def estimate_mean(x, cdf_fn, integral_pow=10):
 
     Parameters
     ----------
-    lb: float
-        The lower bound on the CDF domain.
-    ub: float
-        The upper bound on the CDF domain
+    x: ndarray
+        Values from the original horizontal axis. Only x[0] and x[-1] are used.
     cdf_fn: function
         The CDF function
-    integral_num: int
-        The number of points to evaluate the CDF with. A larger value will
-        yield a more accurate estimate and vice versa.
+    integral_pow: int
+        The value of `k` for the `2**k + 1` equally-spaced samples of the CDF
+        that are used by the Romberg integrator.
 
     Returns
     -------
@@ -41,10 +39,42 @@ def estimate_mean(x, cdf_fn, integral_pow=10):
         The estimated mean
     """
     integral_num = 1 + 2**integral_pow
+
     x_integral, dx = np.linspace(
         x[0], x[-1], integral_num, endpoint=True, retstep=True
     )
+
     return romb(1 - cdf_fn(x_integral), dx=dx)
+
+
+def estimate_auc(x, cdf_fn, integral_pow=5):
+    """Estimate the AUC of a pdf from a CDF.
+
+    Parameters
+    ----------
+    x: ndarray
+        Values from the original horizontal axis. Only x[0] and x[-1] are used.
+    cdf_fn: function
+        The CDF function
+    integral_pow: int
+        The value of `k` for the `2**k + 1` equally-spaced samples of the CDF
+        that are used by the Romberg integrator.
+
+    Returns
+    -------
+    mean: float
+        The estimated mean
+    """
+    integral_num = 1 + 2**integral_pow
+
+    x_integral, dx = np.linspace(
+        x[0], x[-1], integral_num, endpoint=True, retstep=True
+    )
+
+    df = nd.Derivative(cdf_fn, n=1, method="backward")
+    dxs = df(x_integral)
+
+    return romb(dxs, dx=dx)
 
 
 def interpolated_inverse(x, y, num, endpoint=True):
@@ -384,20 +414,14 @@ class BinSmooth:
                 target = m
 
             elif tail_method == "auc":
-
-                def auc_estimator(x, cdf_f):
-                    integral_pow = 5
-                    integral_num = 1 + 2**integral_pow
-
-                    x_integral, dx = np.linspace(
-                        x[0], x[-1], integral_num, endpoint=True, retstep=True
+                if m:
+                    warnings.warn(
+                        "A value for the mean has been provided. If this value"
+                        " is the true mean then using the 'mean' tail_method"
+                        " is preferred over 'auc'."
                     )
-                    df = nd.Derivative(cdf_f, n=1, method="backward")
-                    dxs = df(x_integral)
-                    est_sum = romb(dxs, dx=dx)
-                    return est_sum
 
-                estimator = auc_estimator
+                estimator = estimate_auc
                 target = 1
             else:
                 raise ValueError("Invalid tail_method selected.")
