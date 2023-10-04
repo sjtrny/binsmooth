@@ -47,36 +47,6 @@ def estimate_mean(x, cdf_fn, integral_pow=10):
     return romb(1 - cdf_fn(x_integral), dx=dx)
 
 
-def estimate_auc(x, cdf_fn, integral_pow=5):
-    """Estimate the AUC of a pdf from a CDF.
-
-    Parameters
-    ----------
-    x: ndarray
-        Values from the original horizontal axis. Only x[0] and x[-1] are used.
-    cdf_fn: function
-        The CDF function
-    integral_pow: int
-        The value of `k` for the `2**k + 1` equally-spaced samples of the CDF
-        that are used by the Romberg integrator.
-
-    Returns
-    -------
-    mean: float
-        The estimated mean
-    """
-    integral_num = 1 + 2**integral_pow
-
-    x_integral, dx = np.linspace(
-        x[0], x[-1], integral_num, endpoint=True, retstep=True
-    )
-
-    df = nd.Derivative(cdf_fn, n=1, method="backward")
-    dxs = df(x_integral)
-
-    return romb(dxs, dx=dx)
-
-
 def interpolated_inverse(x, y, num, endpoint=True):
     """Generate samples from an interpolated inverse.
 
@@ -294,8 +264,6 @@ class BinSmooth:
             `includes_tail` is False. Either:
             - `mean`: tail is selected so mean of distribution matches the
                 given mean value `m`;
-            - `auc`: tail is selected so that area under the curve of the PDF
-                is 1;
         tail_bounds: tuple, default=None
             Constrain the search of the tail point to this range. Either:
             - `None`: search is unrestricted;
@@ -413,16 +381,6 @@ class BinSmooth:
                 estimator = estimate_mean
                 target = m
 
-            elif tail_method == "auc":
-                if m:
-                    warnings.warn(
-                        "A value for the mean has been provided. If this value"
-                        " is the true mean then using the 'mean' tail_method"
-                        " is preferred over 'auc'."
-                    )
-
-                estimator = estimate_auc
-                target = 1
             else:
                 raise ValueError("Invalid tail_method selected.")
 
