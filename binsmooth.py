@@ -8,7 +8,7 @@ This module is a re-implementation of the R binsmooth package.
 #
 # License: MIT
 
-__version__ = "2023.9.0"
+__version__ = "2023.10.0"
 
 import warnings
 
